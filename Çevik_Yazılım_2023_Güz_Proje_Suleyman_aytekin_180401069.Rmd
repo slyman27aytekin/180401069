@@ -1,6 +1,5 @@
 ---
 title: "Proje Rapor: Süleyman Aytekin 180401069"
-output: html_document
 output:
   html_document:
     df_print: paged
@@ -8,4 +7,359 @@ output:
 
 # Q1 : Problem tanımı
 
-Şirketimiz adı Scout for Turkey 'dir . Problemimiz ise Beşiktaş jk Futbol kulübüne stoper mevkiğinde bir genç yetenek alınıcaktır.İlgili veri tabanımız üzerinden istenen oyuncuyu bulmamız gerekmektedir.
+Şirketimiz adı Scout for Turkey 'dir. Problemimiz, Beşiktaş JK Futbol kulübüne stoper mevkiğinde bir genç yetenek alınacaktır. İlgili veri tabanımız üzerinden istenen oyuncuyu bulmamız gerekmektedir.
+
+# Q2 : Proje Amacı
+[Veri Seti](https://www.kaggle.com/datasets/vivovinco/20222023-football-player-stats) adlı Kaggle veri setini kullanarak, iş problemimizi veri setinden bilgi çekip istenen koşullara göre ayıklamayı ve çözmeyi amaçlıyoruz. Bu sayede problemi ortadan kaldırmayı planlıyoruz.
+# Q3 : Veri seti keşifsel analizi
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Veri dosyasını internetten indir ve git repo'sunun içine commitle
+filename <- "2022-2023 Football Player Stats.csv"
+
+# Dosyayi ithal et
+library(readr)
+myDF <- read.csv(filename, sep = ";")
+head(myDF)
+```
+
+Veri seti Kaggle web sitesinden indirilmiştir ve **readr::read_csv()** fonksiyonu kullanılarak **`r class(myDF)[[1]]`** tipinde bir değişkene ithal edilmiştir. Veri boyutları aşağıdaki gibidir :
+# Veri çerçevesinin sınıfını kontrol et
+veri_tipi <- class(myDF)[[1]]
+
+# Veri boyutlarını al
+satir_sayisi <- nrow(myDF)
+sutun_sayisi <- ncol(myDF)
+
+# Sonuçları ekrana yazdır
+cat("Veri Tipi:", veri_tipi, "\n")
+cat("Satır Sayısı:", satir_sayisi, "\n")
+cat("Sütun Sayısı:", sutun_sayisi, "\n")
+
+Veri setinin ön görsellemesi aşağıda verilmiştir.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+myDF
+```
+Veri setini incelediğimizde, problem çözümü için kullanacağımız sütunları incelediğimizde, hepsinin doğru veri tipinde geldiğini şu an bir tip değişikliğine gerek olmadığını gözlemliyoruz.
+
+Diğer sütunlardaki değişkenlere ihtiyaç duymayacağımızdan onları  dikkate almayacağız.
+
+Futbolcuların yaş verilerinin dağılımı aşağıdaki histogramda gösterilmiştir.
+
+```{r}
+#Burada daha net gozukmesi için ek işlemler yapılmıştır işlemler aşağıdaki gibidir.
+# Veri setinizdeki yaş verilerinin histogramını oluşturmak için aşağıdaki gibi basit bir gösterim mevcuttur:  hist(myDF$Age, breaks = 20)
+
+library(ggplot2)
+
+ggplot(myDF, aes(x = Age)) +
+  geom_histogram(binwidth = 2, fill = "skyblue", color = "black") +
+  scale_x_continuous(breaks = seq(15, max(myDF$Age), by = 3)) +
+  labs(x = "Age", y = "Frequency") +
+  theme_minimal()
+```
+
+
+
+Görüldüğü üzere, verilerin büyük çoğunluğu 22-25 yaş aralığından gelmektedir. Bu durum, 20 yaş altı futbolcu bulurken daha fazla zorlanabileceğimizi işaret etmektedir.
+
+
+# Q4 : Veri seti ön işlemesi
+
+#Bu bölümde tablodaki sütunların veri tiplerini kontrol ediyoruz ve ihtiyaç duyulması halinde veri tiplerini değiştiriyoruz.
+
+## "Pos " Position(Pozisyon) sütunu veri tipi 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+str(myDF$Pos)
+
+```
+Veri tipleri istenilen formda olduğu için herhangi bir değişiklik yapmamıza gerek yok.
+
+## "Starts" Matches started(İlk 11 başlama sayısı) sütunu veri tipi 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+str(myDF$Starts)
+
+```
+Veri tipleri istenilen formda olduğu için herhangi bir değişiklik yapmamıza gerek yok.
+
+## "Min "Minutes played(Oynanan Dakika) sütunu veri tipi 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+str(myDF$Min)
+
+```
+
+Veri tipleri istenilen formda olduğu için herhangi bir değişiklik yapmamıza gerek yok.
+
+## "PasTotCMP% "Pass completion percentage(Tamamlanan pas yüzdesi) sütunu veri tipi 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+str(myDF$PasTotCmp.)
+
+```
+
+Veri tipleri istenilen formda olduğu için herhangi bir değişiklik yapmamıza gerek yok.
+
+## "PasLonCMP% " Pass completion percentage (Passes longer than 30yards) (30 yard ve üzeri pas başarı oranı) sütunu veri tipi 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+str(myDF$PasLonCmp.)
+
+```
+
+Veri tipleri istenilen formda olduğu için herhangi bir değişiklik yapmamıza gerek yok.
+
+## "PasTotAtt "Passes attempted(Pas deneme) sütunu veri tipi 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+str(myDF$PasTotAtt)
+
+```
+
+Veri tipleri istenilen formda olduğu için herhangi bir değişiklik yapmamıza gerek yok.
+
+
+## "Age "Player’s age(Oyuncunun yaşı) sütunu veri tipi 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+str(myDF$Age)
+
+```
+
+Veri tipleri istenilen formda olduğu için herhangi bir değişiklik yapmamıza gerek yok.
+
+## "MP " Matches played(Oynadığı maç sayısı) sütunu veri tipi 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+str(myDF$MP)
+
+```
+
+Veri tipleri istenilen formda olduğu için herhangi bir değişiklik yapmamıza gerek yok.
+
+## "ToSuc% " Pertange of take-ons Completed Successfully (Başarıyla Tamamlanan Dribbling Yüzdesi) sütunu veri tipi 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+str(myDF$ToSuc.)
+
+```
+
+Veri tipleri istenilen formda olduğu için herhangi bir değişiklik yapmamıza gerek yok.
+
+Not: Beşiktaş JK Futbol Kulübü ile sonradan yaptığımız temaslar sonucunda, "Başarıyla Tamamlanan Dribbling Yüzdesi" yüksek yüzdeli futbolcuların onlar için artık çok önem taşımadığını ve gerektiğinde bu verinin kullanılmamasına karar verilmiştir.
+
+# Q5 : Veri mühendisliği 
+
+## Grafikler ve İstatislikler üzerinden yorumlama 
+
+## "MP " Matches played(Oynadığı maç sayısı)
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Yoğunluk grafiği çizimi
+
+ggplot(myDF, aes(x = MP, fill = MP)) +
+  geom_density(alpha = 0.7) +
+  labs(title = "Yoğunluk Grafiği - Matches played Sütunu", x = "Matches played", y = "Yoğunluk") +
+  theme_minimal()
+
+
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+histogram <- ggplot(myDF, aes(x = MP), binwidth = 5) +
+  geom_histogram(aes(y = ..density..), fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Matches played Sütunu Histogramı", x = "Matches played", y = "Yoğunluk") +
+  theme_minimal()
+
+standart_sapma_cizgisi <- histogram +
+  geom_vline(aes(xintercept = mean(MP), color = "Mean"), linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = mean(MP) + sd(MP), color = "Upper SD"), linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = mean(MP) - sd(MP), color = "Lower SD"), linetype = "dashed", size = 1) +
+  scale_color_manual(name = "Lines", values = c(Mean = "red", `Upper SD` = "blue", `Lower SD` = "green"))
+
+print(standart_sapma_cizgisi)
+
+
+
+
+```
+
+
+Burada görüldüğü üzere bir sezonda 0 ila 10 maç(özellikle 0 ila 5) arasında oynayan futbolcu sayısı oldukça yüksektir. Ancak, maça çıkmaya hazır futbolcu arayışımızda 0 ila 10 maç arası oynayan futbolcuları göz ardı edeceğiz.
+
+# "Pos " Position(Pozisyon) 
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(myDF, aes(x = "", fill = Pos)) +
+  geom_bar(stat = "count", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Pozisyon Dağılımı", x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank())
+
+```
+
+
+Defans oyuncularının sayısı oldukça fazla olduğundan, diğer kriterleri kullanarak bu sayıyı azaltmayı amaçlıyoruz.
+
+
+# "Pos " Position(Pozisyon) ile "PasTotCMP% "Pass completion percentage(Tamamlanan pas yüzdesi) ilişkisi
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Kutu grafiği oluştur
+# Pos sütununu faktör tipine dönüştür
+myDF$Pos <- factor(myDF$Pos)
+
+# Boxplot'u çiz
+ggplot(myDF, aes(x = Pos, y = PasTotCmp.)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+```
+
+
+Görüldüğü üzere, defans oyuncularının pas oranı oldukça yüksek. Bu durum, futbolcu seçimini kolaylaştıracaktır.
+
+## "Min "Minutes played(Oynanan Dakika) ile "Age "Player’s age(Oyuncunun yaşı) ilişkisi
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+# Scatter plot oluşturun
+ggplot(myDF, aes(x = Min, y = Age)) +
+  geom_point() +
+  labs(title = "Minutes Played vs. Age", x = "Minutes Played", y = "Age") +
+  theme_minimal()
+
+```
+
+Grafikte görüldüğü üzere, yaş sayısı azaldıkça alınan süreler de azalıyor. Bu durumda 500 dakika ve üzeri süre alan futbolcuların aranması gerekiyor, bu da arama yelpazemizi istediğimiz şekilde daraltıyor.
+## "PasTotAtt "Passes attempted(Pas deneme) ve "PasLonCMP% " Pass completion percentage (30 yard ve üzeri pas başarı oranı) ilişkisi
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+library(hexbin)
+
+hb <- hexbin(myDF$PasLonCmp., myDF$PasTotAtt, xbins = 30)
+plot(hb, main = "Hexbin Plot - PasLonCmp% vs. PasTotAtt", xlab = "PasLonCmp%", ylab = "PasTotAtt", colorcut = 10)
+
+```
+
+Pas deneme sayısı görüldüğü üzere, aradığımız oyuncu stili %60 ila %80 başarı oranına sahip, uzun pas yüzdesiyle oynayan ve yüksek pas denemesi gerçekleştiren oyunculardır. Bu grafikte ise arama yelpazemizi daralttığımızı görebiliriz.
+
+## "Starts" Matches started(İlk 11 başlama sayısı) grafiği
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(ggplot2)
+
+ggplot(myDF, aes(x = Starts)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Başlama Sayısına Göre Futbolcu Dağılımı", x = "Başlama Sayısı", y = "Oyuncu Sayısı") +
+  theme_minimal()
+```
+
+
+Grafikte 0 ila 5 maç arasında oldukça fazla futbolcu görülmektedir. Arama yelpazemizi daraltmak için bu futbolcuları çıkarmamız gerekiyor.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+medyan_starts <- median(myDF$Starts, na.rm = TRUE)
+cat("Starts Medyan Değeri:", medyan_starts, "\n")
+
+```
+Medyan değeri 7 olduğu ve aradığımız oyuncunun daha fazla maça başlama sayısına sahip olması gerektiği göz önüne alındığında, bu durum arama yelpazemizi daraltmaktadır.
+
+## "ToSuc% " Pertange of take-ons Completed Successfully (Başarıyla Tamamlanan Dribbling Yüzdesi) ile Pos(Position) ilişkisi
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+
+ggplot(myDF, aes(x = Pos, y = ToSuc.)) +
+  geom_point(color = "blue") +
+  labs(title = "Başarıyla Tamamlanan Dribbling Yüzdesi ve Pozisyon İlişkisi", x = "Pozisyon", y = "ToSuc%") +
+  theme_minimal()
+
+```
+
+Grafikte görüldüğü üzere genel olarak, defans oyuncuları %60 ila %25 arasında yer almaktadır.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(ggplot2)
+ortalama_tosuc <- mean(myDF$ToSuc., na.rm = TRUE)
+cat("ToSuc% Ortalama Değeri:", ortalama_tosuc, "\n")
+
+```
+Ortalama olarak ise yaklaşık 34 civarındadır, bu nedenle kulübün isteği üzerine bu kriter üzerine yoğunlaşmayacağız.
+
+
+
+# Q6 : Veri analizi  
+
+Yaptığımız grafik istatistikleri ve diğer özelliklere dayanarak, aradığımız defans oyuncusunun en az 10 maçta ilk 11 başlamış olması, pas denemesi 50 ve üzeri, uzun pas başarı oranının %50 ve üzeri olması, 22 yaş ve altındaki oyuncuların aranmasına kulüple yapılan istişareler sonucunda karar kılınmıştır.
+
+## Kriterlere uyan oyuncuların tablosu
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+
+# Filtreli veriyi oluştur
+filtreli_veri <- myDF %>%
+  filter(Pos == "DF", Starts >= 10, PasTotAtt >= 50, PasLonCmp. >= 50, PasTotCmp. >= 75, Age <= 22, Min >= 500)
+
+# Tabloyu oluştur
+print(filtreli_veri)
+```
+## Genel istatislik verileri
+Tabloda görüldüğü üzere 28 oyuncu sıralanmıştır.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Oyuncu sayısını ve toplam satır sayısını bul
+oyuncu_sayisi <- nrow(filtreli_veri)
+toplam_satir_sayisi <- nrow(myDF)
+
+# Oranı hesapla
+oran <- (oyuncu_sayisi / toplam_satir_sayisi) * 100
+
+# Sonucu yazdır
+cat("Oyuncu Sayısı:", oyuncu_sayisi, "\n")
+cat("Toplam Satır Sayısı:", toplam_satir_sayisi, "\n")
+cat("Oyuncu Oranı: %", oran, "\n")
+```
+
+Sonuç olarak, sadece 28 futbolcu bulunmaktadır ve bu sonuç, istatistiksel olarak veri setimizdeki bütün oyuncuların yaklaşık %1'ine denk gelmektedir.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Filtrelenmiş veri setindeki ortalama yaş ve süreleri hesapla
+
+ortalamalar <- filtreli_veri %>%
+  summarise(
+    Ortalama_Starts = mean(Starts),
+    Ortalama_PasTotAtt = mean(PasTotAtt),
+    Ortalama_PasLonCmp = mean(PasLonCmp.),
+    Ortalama_PasTotCmp = mean(PasTotCmp.),
+    Ortalama_yas = mean(Age),
+    Ortalama_sure = mean(Min)
+  )
+
+# Sonuçları ekrana yazdır
+print(ortalamalar)
+
+
+```
+
+Bu istatistikler, belirlenen kriterlere uyan 28 futbolcunun genel profilini ortaya koymaktadır.
+
+
+
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE,results='hide'}
+# Not yukarıdaki results='hide' olduğundan çıktı gozukmıcektır.Render çalışıyorsa tesleri geçmiştir.
+# Testlerin ayrıntılı gectıklerini gormek için results = 'hide' silin 
+
+
+# 180401069_Çevik_yazılım_test_kodları_Suleyman_aytekin.R dosyasını çağır
+source("180401069_Çevik_yazılım_test_kodları_Suleyman_aytekin.R")
+
+# Tüm testleri çalıştıran kod
+test_result <- test_file("180401069_Çevik_yazılım_test_kodları_Suleyman_aytekin.R")
+summary(test_result)
+print(test_result)
+```
